@@ -6,8 +6,6 @@ Created on Nov 11, 2022
 
 import numpy as np
 
-import finnpy.cfc.pac as pac
-
 import matplotlib
 matplotlib.use("Qt5agg")
 import matplotlib.pyplot as plt
@@ -15,7 +13,39 @@ import matplotlib.pyplot as plt
 import scipy.signal
 import scipy.stats
 
-def run_mod_mi(low_freq_data, high_freq_data, phase_window_half_size = 10, phase_step_width = 20):
+def run_abs_mi(low_freq_data, high_freq_data, phase_window_half_size = 10, phase_step_width = 20):
+    """
+    Calculates the modulation index between a low frequency signal and a high frequency signal.
+    
+    :param low_freq_data: Single array of low frequency data.
+    :param high_freq_data: Single array of high frequency data.
+    :param phase_window_half_size: Width of the phase window used for calculation of frequency/phase histogram. Amplitude gets added to every phase bin within the window size. Larger windows result in more smooth/increased PAC estimates.
+    :param phase_step_width: Step width/shift of the phase window used for calculation of frequency/phase histogram.
+    
+    :return: Amount of phase amplitude coupling measured using the modulation index.
+    """
+    phase_signal = np.angle(scipy.signal.hilbert(low_freq_data), deg = True)
+    amplitude_signal = np.zeros(np.arange(-180, 181, phase_step_width).shape)
+    
+    for (phaseIdx, loc_phase) in enumerate(np.arange(-180, 181, phase_step_width)):
+        phase_indices = np.argwhere(np.abs(phase_signal - loc_phase) < phase_window_half_size)
+
+        if (len(phase_indices) == 0):
+            amplitude_signal[phaseIdx] = np.nan
+        else:
+            amplitude_signal[phaseIdx] = np.mean(np.abs(high_freq_data[phase_indices])) # No need for a hilbert transform
+        
+    amplitude_signal = np.concatenate((amplitude_signal, amplitude_signal))
+    amplitude_signal /= np.nansum(amplitude_signal)
+    
+    len_signal = len(amplitude_signal)
+    uniform_signal = np.random.uniform(np.nanmin(amplitude_signal), np.nanmax(amplitude_signal), len_signal)
+    
+    score = (scipy.stats.entropy(amplitude_signal, uniform_signal, len_signal))/np.log(len_signal)
+
+    return score
+
+def run_hilbert_mi(low_freq_data, high_freq_data, phase_window_half_size = 10, phase_step_width = 20):
     """
     Calculates the modulation index between a low frequency signal and a high frequency signal.
     
@@ -47,7 +77,7 @@ def run_mod_mi(low_freq_data, high_freq_data, phase_window_half_size = 10, phase
 
     return score
 
-def run_mod_mod_mi(low_freq_data, high_freq_data, phase_window_half_size = 10, phase_step_width = 20):
+def run_hilbert_half_mi(low_freq_data, high_freq_data, phase_window_half_size = 10, phase_step_width = 20):
     """
     Calculates the modulation index between a low frequency signal and a high frequency signal.
     
@@ -114,13 +144,13 @@ def get_data(frequency_sampling = 1000, frequencies_between_bursts = [2, 5, 10, 
         for low_freq_signal in low_freq_signals:
 
             np.random.seed(0)
-            mi_score = pac.run_mi(low_freq_signal, high_freq_signal) * 100
+            abs_mi_score = run_abs_mi(low_freq_signal, high_freq_signal) * 100
             np.random.seed(0)
-            mod_mi_score = run_mod_mi(low_freq_signal, high_freq_signal) * 100
+            hilbert_mi_score = run_hilbert_mi(low_freq_signal, high_freq_signal) * 100
             np.random.seed(0)
-            mod_mod_mi_score = run_mod_mod_mi(low_freq_signal, high_freq_signal) * 100
+            hilbert_half_mi_score = run_hilbert_half_mi(low_freq_signal, high_freq_signal) * 100
             
-            loc_scores = [mi_score, mod_mi_score, mod_mod_mi_score]
+            loc_scores = [abs_mi_score, hilbert_mi_score, hilbert_half_mi_score]
             
             scores[-1].append(loc_scores);
     
