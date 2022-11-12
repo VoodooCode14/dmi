@@ -10,7 +10,7 @@ import matplotlib
 matplotlib.use("Qt5agg")
 import matplotlib.pyplot as plt
 
-import finn.cfc.pac as pac
+import finnpy.cfc.pac as pac
 
 np.random.seed(0)
 
@@ -29,13 +29,6 @@ def generate_high_frequency_signal(n, frequency_sampling, frequency_within_burst
     return signal
 
 def draw_figure(scores, best_fits, amplitude_signals, frequencies_between_bursts, tgt_frequency_between_bursts):
-    #---- (_, axes) = plt.subplots(len(scores), len(frequencies_between_bursts))
-    #---------------------------------------- for rep_idx in range(len(scores)):
-        #------------- for (ax_idx, _) in enumerate(amplitude_signals[rep_idx]):
-            # axes[rep_idx, ax_idx].plot(np.arange(0, 1, 1/len(amplitude_signals[rep_idx, ax_idx])), amplitude_signals[rep_idx, ax_idx], label = "original data")
-            # axes[rep_idx, ax_idx].plot(np.arange(0, 1, 1/len(amplitude_signals[rep_idx, ax_idx])), best_fits[rep_idx, ax_idx], label = "fitted curve")
-            # axes[rep_idx, ax_idx].set_title("DMI| PLV| MVL| MI  \n%.3f|%.3f|%.3f|%.3f" % (scores[rep_idx, ax_idx][0], scores[rep_idx, ax_idx][1],
-                                                                                            # scores[rep_idx, ax_idx][2], scores[rep_idx, ax_idx][3]))
     (_, axes) = plt.subplots(1, len(frequencies_between_bursts))
     for (ax_idx, _) in enumerate(amplitude_signals):
         axes[ax_idx].plot(np.arange(0, 1, 1/len(amplitude_signals[ax_idx])), amplitude_signals[ax_idx], label = "original data")
